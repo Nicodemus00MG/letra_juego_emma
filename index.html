@@ -141,19 +141,68 @@
             margin-bottom: 20px;
         }
 
-        .current-name {
-            font-size: 2.8em;
+        .name-display {
+            font-size: 3.5em;
             font-weight: bold;
-            color: #C44569;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             letter-spacing: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .letter {
+            color: #DDD;
+            transition: all 0.5s ease;
+            padding: 0 5px;
+        }
+
+        .letter.completed {
+            color: #27AE60;
+            animation: letterSuccess 1s ease;
+            text-shadow: 0 0 20px #27AE60;
+        }
+
+        .letter.current {
+            color: #FF6B9D;
+            animation: pulse 1.5s ease-in-out infinite;
+            text-shadow: 0 0 15px #FF6B9D;
+            transform: scale(1.2);
+        }
+
+        @keyframes letterSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5) rotate(10deg); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
         }
 
         .progress-info {
-            font-size: 1.4em;
+            font-size: 1.5em;
             color: #8E44AD;
             margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .current-letter-display {
+            font-size: 8em;
+            font-weight: bold;
+            color: #FF6B9D;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+            margin: 20px 0;
+            text-align: center;
+            animation: currentLetterGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes currentLetterGlow {
+            0%, 100% { text-shadow: 3px 3px 6px rgba(255, 107, 157, 0.3); }
+            50% { text-shadow: 3px 3px 20px rgba(255, 107, 157, 0.8); }
         }
 
         .canvas-container {
@@ -168,12 +217,7 @@
         #tracingCanvas {
             display: block;
             cursor: none;
-            background: linear-gradient(45deg, #FFF 25%, transparent 25%), 
-                        linear-gradient(-45deg, #FFF 25%, transparent 25%), 
-                        linear-gradient(45deg, transparent 75%, #FFF 75%), 
-                        linear-gradient(-45deg, transparent 75%, #FFF 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background: #FFF;
         }
 
         .controls {
@@ -206,6 +250,7 @@
 
         .btn.next {
             background: linear-gradient(45deg, #F8B500, #FF9F43);
+            display: none;
         }
 
         .btn.clear {
@@ -274,16 +319,6 @@
             }
         }
 
-        .letter-complete {
-            animation: letterSuccess 0.8s ease;
-        }
-
-        @keyframes letterSuccess {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
         .progress-bar {
             width: 100%;
             height: 15px;
@@ -298,22 +333,8 @@
             height: 100%;
             background: linear-gradient(90deg, #FF6B9D, #F8B500, #FF9F43);
             border-radius: 8px;
-            transition: width 0.5s ease;
+            transition: width 0.8s ease;
             width: 0%;
-        }
-
-        .rainbow-text {
-            background: linear-gradient(45deg, #FF6B9D, #C44569, #F8B500, #FF9F43, #8E44AD, #9B59B6);
-            background-size: 300% 300%;
-            animation: rainbow 3s ease-in-out infinite;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        @keyframes rainbow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
 
         @media (max-width: 768px) {
@@ -321,9 +342,13 @@
                 font-size: 2em;
             }
             
-            .current-name {
-                font-size: 2.2em;
+            .name-display {
+                font-size: 2.5em;
                 letter-spacing: 4px;
+            }
+            
+            .current-letter-display {
+                font-size: 6em;
             }
             
             .container {
@@ -340,20 +365,16 @@
             }
         }
 
-        .cursor-trail {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: radial-gradient(circle, #FF6B9D, transparent);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 100;
-            animation: trail 0.5s ease-out forwards;
-        }
-
-        @keyframes trail {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(3); opacity: 0; }
+        .instructions {
+            background: linear-gradient(145deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+            border: 3px solid #3498DB;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.2em;
+            color: #2C3E50;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -369,20 +390,24 @@
 
         <div class="game-area">
             <div class="name-container">
-                <div class="current-name rainbow-text" id="currentName">EMMA</div>
-                <div class="progress-info" id="progressInfo">¡Traza la primera letra con tu dedito! 💖</div>
+                <div class="name-display" id="nameDisplay"></div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-info" id="progressInfo">¡Traza tu primera letra! 💖</div>
+                <div class="current-letter-display" id="currentLetterDisplay">E</div>
+                <div class="instructions">
+                    ✏️ Sigue las líneas punteadas con tu dedito
                 </div>
             </div>
 
             <div class="canvas-container">
-                <canvas id="tracingCanvas" width="800" height="400"></canvas>
+                <canvas id="tracingCanvas" width="600" height="400"></canvas>
             </div>
 
             <div class="controls">
                 <button class="btn clear" onclick="clearCanvas()">🧽 Borrar</button>
-                <button class="btn next" onclick="nextLetter()" id="nextBtn" style="display: none;">➡️ Siguiente</button>
+                <button class="btn next" onclick="nextLetter()" id="nextBtn">➡️ ¡Muy Bien!</button>
                 <button class="btn restart" onclick="restartGame()">🔄 Empezar de Nuevo</button>
             </div>
         </div>
@@ -393,100 +418,215 @@
 
     <script>
         // Game state
-        let currentWordIndex = 0;
+        const fullName = 'EMMAVICTORIA';
+        const words = ['EMMA', 'VICTORIA'];
         let currentLetterIndex = 0;
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let letterPaths = [];
-        let completedStrokes = 0;
-        let totalStrokes = 0;
-
-        const words = ['EMMA', 'VICTORIA'];
+        let strokes = [];
+        let requiredCoverage = 0.3; // Percentage of letter area that needs to be traced
+        
         const canvas = document.getElementById('tracingCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Letter path definitions for tracing
-        const letterDefinitions = {
+        // Letter definitions with proper scaling for canvas
+        const letterPaths = {
             'E': [
-                [[100, 100], [100, 300]], // Vertical line
-                [[100, 100], [200, 100]], // Top horizontal
-                [[100, 200], [180, 200]], // Middle horizontal
-                [[100, 300], [200, 300]]  // Bottom horizontal
+                // Vertical line
+                [[80, 80], [80, 320]],
+                // Top horizontal
+                [[80, 80], [220, 80]],
+                // Middle horizontal  
+                [[80, 200], [180, 200]],
+                // Bottom horizontal
+                [[80, 320], [220, 320]]
             ],
             'M': [
-                [[100, 300], [100, 100]], // Left vertical
-                [[100, 100], [150, 200]], // Left diagonal
-                [[150, 200], [200, 100]], // Right diagonal
-                [[200, 100], [200, 300]]  // Right vertical
+                // Left vertical
+                [[80, 320], [80, 80]],
+                // Left diagonal
+                [[80, 80], [150, 200]],
+                // Right diagonal
+                [[150, 200], [220, 80]],
+                // Right vertical
+                [[220, 80], [220, 320]]
             ],
             'A': [
-                [[100, 300], [150, 100]], // Left diagonal
-                [[150, 100], [200, 300]], // Right diagonal
-                [[125, 200], [175, 200]]  // Cross bar
+                // Left diagonal
+                [[80, 320], [150, 80]],
+                // Right diagonal
+                [[150, 80], [220, 320]],
+                // Cross bar
+                [[115, 200], [185, 200]]
             ],
             'V': [
-                [[100, 100], [150, 300]], // Left diagonal
-                [[150, 300], [200, 100]]  // Right diagonal
+                // Left diagonal
+                [[80, 80], [150, 320]],
+                // Right diagonal
+                [[150, 320], [220, 80]]
             ],
             'I': [
-                [[125, 100], [175, 100]], // Top horizontal
-                [[150, 100], [150, 300]], // Vertical
-                [[125, 300], [175, 300]]  // Bottom horizontal
+                // Top horizontal
+                [[110, 80], [190, 80]],
+                // Vertical
+                [[150, 80], [150, 320]],
+                // Bottom horizontal
+                [[110, 320], [190, 320]]
             ],
             'C': [
-                [[200, 150], [150, 100], [100, 150], [100, 250], [150, 300], [200, 250]] // Curved C
+                // Curved C (approximated with lines)
+                [[220, 140], [180, 80], [120, 80], [80, 120], [80, 280], [120, 320], [180, 320], [220, 280]]
             ],
             'T': [
-                [[100, 100], [200, 100]], // Top horizontal
-                [[150, 100], [150, 300]]  // Vertical
+                // Top horizontal
+                [[80, 80], [220, 80]],
+                // Vertical
+                [[150, 80], [150, 320]]
             ],
             'O': [
-                [[150, 100], [200, 150], [200, 250], [150, 300], [100, 250], [100, 150], [150, 100]] // Circle
+                // Circle (approximated)
+                [[150, 80], [200, 100], [220, 150], [220, 250], [200, 300], [150, 320], [100, 300], [80, 250], [80, 150], [100, 100], [150, 80]]
             ],
             'R': [
-                [[100, 300], [100, 100]], // Vertical
-                [[100, 100], [150, 100], [180, 130], [180, 170], [150, 200], [100, 200]], // Top part
-                [[150, 200], [200, 300]]  // Bottom diagonal
+                // Vertical
+                [[80, 320], [80, 80]],
+                // Top part
+                [[80, 80], [180, 80], [220, 120], [220, 180], [180, 200], [80, 200]],
+                // Bottom diagonal
+                [[180, 200], [220, 320]]
             ]
         };
 
-        // Initialize canvas
-        function initCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * window.devicePixelRatio;
-            canvas.height = rect.height * window.devicePixelRatio;
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-            
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-            
-            setupEventListeners();
+        function initGame() {
+            setupCanvas();
+            updateDisplay();
             drawCurrentLetter();
-            updateProgress();
             createFloatingElements();
+            playSound('start');
         }
 
-        // Setup touch and mouse events
-        function setupEventListeners() {
-            // Touch events for tablets
+        function setupCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            
+            // Set actual canvas size
+            canvas.width = 600;
+            canvas.height = 400;
+            
+            // Set display size
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            canvas.style.maxWidth = '600px';
+            canvas.style.maxHeight = '400px';
+            
+            // Setup event listeners
             canvas.addEventListener('touchstart', startDrawing, { passive: false });
             canvas.addEventListener('touchmove', draw, { passive: false });
             canvas.addEventListener('touchend', stopDrawing, { passive: false });
-            
-            // Mouse events for desktop
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseout', stopDrawing);
         }
 
+        function updateDisplay() {
+            // Update name display
+            const nameDisplay = document.getElementById('nameDisplay');
+            nameDisplay.innerHTML = '';
+            
+            for (let i = 0; i < fullName.length; i++) {
+                const letterSpan = document.createElement('span');
+                letterSpan.className = 'letter';
+                letterSpan.textContent = fullName[i];
+                
+                if (i < currentLetterIndex) {
+                    letterSpan.classList.add('completed');
+                } else if (i === currentLetterIndex) {
+                    letterSpan.classList.add('current');
+                }
+                
+                nameDisplay.appendChild(letterSpan);
+                
+                // Add space between words
+                if (i === 3) { // After EMMA
+                    const space = document.createElement('span');
+                    space.innerHTML = '&nbsp;&nbsp;';
+                    nameDisplay.appendChild(space);
+                }
+            }
+            
+            // Update current letter display
+            const currentLetter = fullName[currentLetterIndex];
+            document.getElementById('currentLetterDisplay').textContent = currentLetter;
+            
+            // Update progress info
+            const wordIndex = currentLetterIndex < 4 ? 0 : 1;
+            const letterInWord = currentLetterIndex < 4 ? currentLetterIndex : currentLetterIndex - 4;
+            const word = words[wordIndex];
+            
+            document.getElementById('progressInfo').textContent = 
+                `Letra ${currentLetter} de ${word} (${currentLetterIndex + 1} de ${fullName.length}) ✨`;
+            
+            // Update progress bar
+            const progress = (currentLetterIndex / fullName.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function drawCurrentLetter() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const currentLetter = fullName[currentLetterIndex];
+            const paths = letterPaths[currentLetter];
+            
+            if (!paths) return;
+            
+            // Draw dotted guidelines
+            ctx.strokeStyle = '#E0E0E0';
+            ctx.lineWidth = 8;
+            ctx.setLineDash([15, 10]);
+            ctx.lineCap = 'round';
+            
+            paths.forEach(path => {
+                ctx.beginPath();
+                ctx.moveTo(path[0][0], path[0][1]);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.lineTo(path[i][0], path[i][1]);
+                }
+                ctx.stroke();
+            });
+            
+            // Draw start point
+            if (paths.length > 0) {
+                const startPoint = paths[0][0];
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#F8B500';
+                ctx.beginPath();
+                ctx.arc(startPoint[0], startPoint[1], 20, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Add white border
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                
+                // Add start text
+                ctx.fillStyle = '#FFF';
+                ctx.font = 'bold 14px Comic Sans MS';
+                ctx.textAlign = 'center';
+                ctx.fillText('START', startPoint[0], startPoint[1] + 5);
+            }
+            
+            // Reset strokes for new letter
+            strokes = [];
+        }
+
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
             const touch = e.touches ? e.touches[0] : e;
             return {
-                x: (touch.clientX - rect.left) * (canvas.width / rect.width) / window.devicePixelRatio,
-                y: (touch.clientY - rect.top) * (canvas.height / rect.height) / window.devicePixelRatio
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
             };
         }
 
@@ -494,10 +634,7 @@
             e.preventDefault();
             isDrawing = true;
             const pos = getPos(e);
-            lastX = pos.x;
-            lastY = pos.y;
-            
-            createTrail(pos.x, pos.y);
+            strokes.push([pos]);
         }
 
         function draw(e) {
@@ -506,25 +643,29 @@
             
             const pos = getPos(e);
             
+            // Add to current stroke
+            if (strokes.length > 0) {
+                strokes[strokes.length - 1].push(pos);
+            }
+            
             // Draw user's stroke
             ctx.strokeStyle = '#FF6B9D';
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 12;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
+            ctx.setLineDash([]);
             
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
+            const currentStroke = strokes[strokes.length - 1];
+            if (currentStroke.length > 1) {
+                const lastPoint = currentStroke[currentStroke.length - 2];
+                ctx.beginPath();
+                ctx.moveTo(lastPoint.x, lastPoint.y);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
             
-            // Create trail effect
-            createTrail(pos.x, pos.y);
-            
-            lastX = pos.x;
-            lastY = pos.y;
-            
-            // Check if stroke matches letter path
-            checkLetterProgress(pos.x, pos.y);
+            // Check if letter is complete
+            checkLetterCompletion();
         }
 
         function stopDrawing(e) {
@@ -533,127 +674,73 @@
             isDrawing = false;
         }
 
-        function createTrail(x, y) {
-            const trail = document.createElement('div');
-            trail.className = 'cursor-trail';
-            trail.style.left = (x + canvas.offsetLeft) + 'px';
-            trail.style.top = (y + canvas.offsetTop) + 'px';
-            document.body.appendChild(trail);
+        function checkLetterCompletion() {
+            const currentLetter = fullName[currentLetterIndex];
+            const paths = letterPaths[currentLetter];
             
-            setTimeout(() => {
-                if (trail.parentNode) {
-                    trail.parentNode.removeChild(trail);
-                }
-            }, 500);
-        }
-
-        function drawCurrentLetter() {
-            const word = words[currentWordIndex];
-            const letter = word[currentLetterIndex];
+            if (!paths) return;
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Simple completion check: if enough drawing has been done
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let drawnPixels = 0;
             
-            if (letterDefinitions[letter]) {
-                letterPaths = letterDefinitions[letter];
-                totalStrokes = letterPaths.length;
-                completedStrokes = 0;
-                
-                // Draw dotted guidelines
-                letterPaths.forEach((path, index) => {
-                    ctx.strokeStyle = '#E8E8E8';
-                    ctx.lineWidth = 6;
-                    ctx.setLineDash([15, 10]);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(path[0][0], path[0][1]);
-                    for (let i = 1; i < path.length; i++) {
-                        ctx.lineTo(path[i][0], path[i][1]);
-                    }
-                    ctx.stroke();
-                });
-                
-                // Draw start point
-                if (letterPaths.length > 0) {
-                    const startPoint = letterPaths[0][0];
-                    ctx.fillStyle = '#F8B500';
-                    ctx.setLineDash([]);
-                    ctx.beginPath();
-                    ctx.arc(startPoint[0], startPoint[1], 15, 0, 2 * Math.PI);
-                    ctx.fill();
-                    
-                    // Add start indicator
-                    ctx.fillStyle = '#FFF';
-                    ctx.font = 'bold 20px Comic Sans MS';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('¡AQUÍ!', startPoint[0], startPoint[1] - 25);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                // Check if pixel is pink (user's drawing)
+                if (imageData.data[i] > 200 && imageData.data[i + 1] < 150 && imageData.data[i + 2] > 100) {
+                    drawnPixels++;
                 }
             }
-        }
-
-        function checkLetterProgress(x, y) {
-            // Simple completion check - if user has drawn enough, consider letter complete
-            const canvas_area = canvas.width * canvas.height;
-            const drawn_pixels = getDrawnPixels();
-            const completion_threshold = 0.3; // 30% of expected strokes
             
-            if (drawn_pixels > canvas_area * 0.02) { // If enough drawing has been done
+            // If user has drawn enough, consider letter complete
+            if (drawnPixels > 1000) { // Adjust this threshold as needed
                 setTimeout(() => {
                     letterCompleted();
                 }, 500);
             }
         }
 
-        function getDrawnPixels() {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            let pixels = 0;
-            for (let i = 0; i < imageData.data.length; i += 4) {
-                if (imageData.data[i + 3] > 0) pixels++; // Count non-transparent pixels
-            }
-            return pixels;
-        }
-
         function letterCompleted() {
             playSound('success');
             createSparkles();
             
-            // Show celebration message
+            // Show celebration
             const messages = [
-                '¡Fantástico Emma! 🌟',
-                '¡Muy bien Victoria! 💖',
-                '¡Eres increíble! ✨',
-                '¡Perfecto! 🦋',
-                '¡Excelente trabajo! 🌈'
+                '¡Perfecto Emma! 🌟',
+                '¡Excelente Victoria! 💖',
+                '¡Muy bien! ✨',
+                '¡Fantástico! 🦋',
+                '¡Increíble! 🌈'
             ];
             
-            showCelebration(messages[Math.floor(Math.random() * messages.length)]);
+            showQuickCelebration(messages[Math.floor(Math.random() * messages.length)]);
             
             // Show next button
             document.getElementById('nextBtn').style.display = 'inline-block';
-            
-            currentLetterIndex++;
-            updateProgress();
         }
 
         function nextLetter() {
-            const word = words[currentWordIndex];
+            currentLetterIndex++;
             
-            if (currentLetterIndex >= word.length) {
-                // Word completed
-                if (currentWordIndex < words.length - 1) {
-                    currentWordIndex++;
-                    currentLetterIndex = 0;
-                    document.getElementById('currentName').textContent = words[currentWordIndex];
-                    document.getElementById('progressInfo').textContent = '¡Ahora tu segundo nombre! 💕';
-                } else {
-                    // All words completed!
-                    gameCompleted();
-                    return;
-                }
+            // Hide next button
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            if (currentLetterIndex >= fullName.length) {
+                // All letters completed!
+                gameCompleted();
+                return;
             }
             
-            document.getElementById('nextBtn').style.display = 'none';
-            drawCurrentLetter();
-            updateProgress();
+            // Check if completed first word
+            if (currentLetterIndex === 4) {
+                showCelebration('¡Terminaste EMMA! 🎉<br>¡Ahora tu segundo nombre! 💕', 2000);
+                setTimeout(() => {
+                    updateDisplay();
+                    drawCurrentLetter();
+                }, 2000);
+            } else {
+                updateDisplay();
+                drawCurrentLetter();
+            }
         }
 
         function gameCompleted() {
@@ -664,52 +751,45 @@
                 🎊 ¡FELICITACIONES EMMA VICTORIA! 🎊<br>
                 <span style="font-size: 0.6em;">
                 ¡Escribiste tu nombre completo perfectamente!<br>
-                🌟 Eres una niña muy inteligente 🌟
+                🌟 Eres una niña muy inteligente y especial 🌟
                 </span>
             `;
             
-            showCelebration(finalMessage, 8000);
+            showCelebration(finalMessage, 6000);
             
-            // Reset for replay
+            // Show restart option
             setTimeout(() => {
-                document.getElementById('nextBtn').textContent = '🎮 ¡Jugar de Nuevo!';
+                document.getElementById('nextBtn').textContent = '🎮 ¡Escribir de Nuevo!';
                 document.getElementById('nextBtn').style.display = 'inline-block';
                 document.getElementById('nextBtn').onclick = restartGame;
-            }, 4000);
+            }, 3000);
         }
 
         function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Only clear user drawings, keep the letter template
             drawCurrentLetter();
             document.getElementById('nextBtn').style.display = 'none';
             playSound('clear');
         }
 
         function restartGame() {
-            currentWordIndex = 0;
             currentLetterIndex = 0;
-            document.getElementById('currentName').textContent = words[0];
-            document.getElementById('progressInfo').textContent = '¡Traza la primera letra con tu dedito! 💖';
             document.getElementById('nextBtn').style.display = 'none';
             document.getElementById('nextBtn').onclick = nextLetter;
-            document.getElementById('nextBtn').textContent = '➡️ Siguiente';
-            clearCanvas();
-            updateProgress();
+            document.getElementById('nextBtn').textContent = '➡️ ¡Muy Bien!';
+            updateDisplay();
+            drawCurrentLetter();
             playSound('start');
         }
 
-        function updateProgress() {
-            const totalLetters = words.join('').length;
-            const completedLetters = words.slice(0, currentWordIndex).join('').length + currentLetterIndex;
-            const progress = (completedLetters / totalLetters) * 100;
+        function showQuickCelebration(message) {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = message;
+            celebration.style.display = 'block';
             
-            document.getElementById('progressFill').style.width = progress + '%';
-            
-            if (currentLetterIndex < words[currentWordIndex].length) {
-                const currentLetter = words[currentWordIndex][currentLetterIndex];
-                document.getElementById('progressInfo').textContent = 
-                    `Letra: ${currentLetter} (${completedLetters + 1} de ${totalLetters}) 🌟`;
-            }
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 1500);
         }
 
         function showCelebration(message, duration = 3000) {
@@ -725,7 +805,7 @@
         function createSparkles() {
             const sparklesContainer = document.getElementById('sparkles');
             
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 12; i++) {
                 const sparkle = document.createElement('div');
                 sparkle.className = 'sparkle';
                 sparkle.style.left = Math.random() * 100 + '%';
@@ -743,7 +823,7 @@
         }
 
         function createMegaSparkles() {
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 8; i++) {
                 setTimeout(() => createSparkles(), i * 200);
             }
         }
@@ -752,7 +832,7 @@
             const container = document.getElementById('floatingElements');
             const elements = ['🦋', '🌸', '⭐', '💖', '🌺', '✨', '🌈', '🧚‍♀️'];
             
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 15; i++) {
                 const element = document.createElement('div');
                 element.textContent = elements[Math.floor(Math.random() * elements.length)];
                 
@@ -815,14 +895,11 @@
         }
 
         // Initialize when page loads
-        window.addEventListener('load', () => {
-            initCanvas();
-            playSound('start');
-        });
-
+        window.addEventListener('load', initGame);
+        
         // Handle screen rotation
         window.addEventListener('resize', () => {
-            setTimeout(initCanvas, 100);
+            setTimeout(setupCanvas, 100);
         });
     </script>
 </body>
